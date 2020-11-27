@@ -1,10 +1,16 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
+import '../data_objects/records_object.dart';
+import '../components/Filter.dart';
 
 
 class Records extends StatefulWidget {
   final double width;
+  final RecordsData recordsData;
+  final FilterObj filter;
 
-  Records({this.width});
+  Records({this.width , this.recordsData,this.filter});
 
   @override
   _RecordsState createState() => _RecordsState();
@@ -17,10 +23,16 @@ class _RecordsState extends State<Records> {
       padding: EdgeInsets.all(0),
       child: Column(
         children: [
-          Record(width: this.widget.width,),
-          Record(width: this.widget.width,),
-          Record(width: this.widget.width,),
-          Record(width: this.widget.width,),
+          if(this.widget.filter == null || this.widget.filter.stateName.value == nullptr) for(var strec in this.widget.recordsData.stateRecords)
+            for(var cityRec in strec.cityRecords )
+              for(StationRecord stat in cityRec.stationRecords)
+                Record(width: this.widget.width*0.95,stationRecord: stat,)
+          else if(this.widget.filter.cityName.value == nullptr)
+            for(var cityRec in this.widget.filter.stateName.value.cityRecords )
+              for(StationRecord stat in cityRec.stationRecords)
+                Record(width: this.widget.width*0.95,stationRecord: stat,)
+          else  for(StationRecord stat in this.widget.filter.cityName.value.stationRecords)
+              Record(width: this.widget.width*0.95,stationRecord: stat,)
         ],
       ),
     );
@@ -31,8 +43,9 @@ class _RecordsState extends State<Records> {
 
 class Record extends StatefulWidget {
   final double width;
+  final StationRecord stationRecord;
 
-  Record({this.width});
+  Record({this.width , this.stationRecord});
 
   @override
   _RecordState createState() => _RecordState();
@@ -55,7 +68,7 @@ class _RecordState extends State<Record> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            "Ballygunge, Kolkata - WBPCB",
+            this.widget.stationRecord.stationName,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w600,
@@ -65,9 +78,9 @@ class _RecordState extends State<Record> {
 
           SizedBox(height: 10,),
           Column(
-
             children: [
-              Container(
+              for(Pollutant data in this.widget.stationRecord.pollutants)
+                Container(
                 margin:EdgeInsets.only(top:10),
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5),
@@ -78,7 +91,7 @@ class _RecordState extends State<Record> {
                     Padding(
                       padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
                       child: Text(
-                        "PM10",
+                        data.id,
                         style: TextStyle(
                             fontWeight: FontWeight.w500
                         ),
@@ -87,136 +100,19 @@ class _RecordState extends State<Record> {
                     Padding(
                         padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
                         child: Text(
-                            "min:118"
+                            "min:${data.min}"
                         )
                     ),
                     Padding(
                         padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
                         child: Text(
-                            "avg:157"
+                            "avg:${data.avg}"
                         )
                     ),
                     Padding(
                         padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
                         child: Text(
-                            "max:200"
-                        )
-                    ),
-
-                  ],
-                ),
-              ),
-              Container(
-                margin:EdgeInsets.only(top:10),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: Color.fromRGBO(223, 225, 229, 1.0),width: 1)
-                ),
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                      child: Text(
-                        "PM10",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w500
-                        ),
-                      ),
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                        child: Text(
-                            "min:118"
-                        )
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                        child: Text(
-                            "avg:157"
-                        )
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                        child: Text(
-                            "max:200"
-                        )
-                    ),
-
-                  ],
-                ),
-              ),
-              Container(
-                margin:EdgeInsets.only(top:10),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: Color.fromRGBO(223, 225, 229, 1.0),width: 1)
-                ),
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                      child: Text(
-                        "PM10",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w500
-                        ),
-                      ),
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                        child: Text(
-                            "min:118"
-                        )
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                        child: Text(
-                            "avg:157"
-                        )
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                        child: Text(
-                            "max:200"
-                        )
-                    ),
-
-                  ],
-                ),
-              ),
-              Container(
-                margin:EdgeInsets.only(top:10),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: Color.fromRGBO(223, 225, 229, 1.0),width: 1)
-                ),
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                      child: Text(
-                        "PM10",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w500
-                        ),
-                      ),
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                        child: Text(
-                            "min:118"
-                        )
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                        child: Text(
-                            "avg:157"
-                        )
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.only(top:8.0,left:5,bottom:8),
-                        child: Text(
-                            "max:200"
+                            "max:${data.max}"
                         )
                     ),
 

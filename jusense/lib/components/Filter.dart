@@ -1,11 +1,14 @@
-import 'package:flutter/material.dart';
+import 'dart:ffi';
 
+import 'package:flutter/material.dart';
+import '../data_objects/records_object.dart';
 
 class Filter extends StatefulWidget {
 
   final double height;
-
-  Filter({this.height});
+  final Future<RecordsData> recordsData;
+  final Function updateParentFilter;
+  Filter({this.height,this.recordsData,this.updateParentFilter});
 
   @override
   _FilterState createState() => _FilterState();
@@ -13,7 +16,36 @@ class Filter extends StatefulWidget {
 
 class _FilterState extends State<Filter> {
 
-  var filter = FilterObj();
+  FilterObj filter ;
+  RecordsData _recordsData;
+  List<FilterData> stateList = <FilterData>[
+    FilterData(name: "All States",value: nullptr),
+  ], cityList = <FilterData>[
+    FilterData(name: "All City",value: nullptr),
+  ];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    filter = FilterObj(stateName: stateList[0]);
+    filter.cityName = cityList[0];
+
+
+    this.widget.recordsData.then((value) {
+      print("record data");
+      setState(() {
+        _recordsData = value;
+        stateList.addAll(
+            <FilterData>[
+              if(_recordsData!=null) for(StateRecord strec in _recordsData.stateRecords)
+                FilterData(name: strec.stateName,value: strec)
+            ]
+        ) ;
+
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +62,7 @@ class _FilterState extends State<Filter> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(30)
             ),
-            child:DropdownButton<String>(
+            child:DropdownButton<FilterData>(
               value: filter.stateName,
               icon: Icon(Icons.arrow_downward),
               iconSize: 24,
@@ -40,28 +72,36 @@ class _FilterState extends State<Filter> {
                 // height: 0,
                 // color: Colors.deepPurpleAccent,
               ),
-              onChanged: (String newValue) {
+              onChanged: ( newValue) {
                 setState(() {
                   filter.stateName = newValue;
+                  cityList.removeWhere((element) => element.value!=nullptr);
+                  cityList.addAll(
+                      <FilterData>[
+                        if(filter.stateName.value != nullptr) for(CityRecord strec in filter.stateName.value.cityRecords)
+                          FilterData(name: strec.cityName,value: strec)
+                      ]
+                  );
+                  filter.cityName = cityList[0];
+                  this.widget.updateParentFilter(filter);
                 });
               },
-              items: <String>['Oneasfaf', 'All', 'Freefgjkla', 'Fourafsjlflsa']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
+              items: stateList.map<DropdownMenuItem<FilterData>>((FilterData listItem) {
+                return DropdownMenuItem<FilterData>(
+                  value: listItem,
+                  child: Text(listItem.name),
                 );
               }).toList(),
             ),
           ),
           Spacer(),
-          Container(
+          if(filter.stateName.value != nullptr) Container(
             padding: EdgeInsets.symmetric(horizontal: 30,vertical: 2),
             decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(30)
             ),
-            child:DropdownButton<String>(
+            child:DropdownButton<FilterData>(
               value: filter.cityName,
               icon: Icon(Icons.arrow_downward),
               iconSize: 24,
@@ -71,47 +111,16 @@ class _FilterState extends State<Filter> {
                 // height: 0,
                 // color: Colors.deepPurpleAccent,
               ),
-              onChanged: (String newValue) {
+              onChanged: (FilterData newValue) {
                 setState(() {
                   filter.cityName = newValue;
                 });
+                this.widget.updateParentFilter(filter);
               },
-              items: <String>['Ojkfaslafne', 'Twkjflasfaso', 'Frefjkasdadsklfae',"All", 'FoJKHEWUHLAKSur']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-            ),
-          ),
-          Spacer(),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 30,vertical: 2),
-            decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30)
-            ),
-            child:DropdownButton<String>(
-              value: filter.pollutant,
-              icon: Icon(Icons.arrow_downward),
-              iconSize: 24,
-              elevation: 76,
-              style: TextStyle(color: Colors.deepPurple),
-              underline: Container(
-                // height: 0,
-                // color: Colors.deepPurpleAccent,
-              ),
-              onChanged: (String newValue) {
-                setState(() {
-                  filter.pollutant = newValue;
-                });
-              },
-              items: <String>['One', 'Two', 'Free', 'Four','All']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
+              items: cityList.map<DropdownMenuItem<FilterData>>((FilterData listItem) {
+                return DropdownMenuItem<FilterData>(
+                  value: listItem,
+                  child: Text(listItem.name),
                 );
               }).toList(),
             ),
@@ -123,10 +132,15 @@ class _FilterState extends State<Filter> {
   }
 }
 
-
 class FilterObj{
-  String stateName= "All";
-  String cityName= "All";
-  String pollutant= "All";
+  FilterData stateName;
+  FilterData cityName;
+  FilterObj({this.stateName,this.cityName});
+}
+
+class FilterData{
+  String name;
+  dynamic value;// Holds StateRecord,CityRecord
+  FilterData({this.name,this.value});
 }
 
