@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import './components/records.dart';
 import './components/Filter.dart';
 import './data_objects/records_object.dart';
-import './data_objects/httpservice.dart';
 
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  MyHomePage({Key key, this.title,this.recordsData}) : super(key: key);
 
   final String title;
+  final Future<RecordsData> recordsData;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -16,7 +16,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  Future<RecordsData> recordsData;
   FilterObj filterValue ;
 
 
@@ -24,7 +23,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    recordsData = fetchRecords();
     filterValue = null;
   }
 
@@ -38,7 +36,66 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     return Scaffold(
+      // backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        // leading: IconButton(
+        //   icon: Icon(Icons.menu),
+        //   onPressed: (){
+        //
+        //   },
+        // ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text(
+                'Sample User',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
+            ),
+            InkWell(
+                child: ListTile(
+                  leading: Icon(Icons.analytics_rounded),
+                  title: Text('List View'),
+                ),
+                onTap: (){
+                  Navigator.pushReplacementNamed(context, "/");
+                },
+              splashColor: Colors.blue,
 
+            ),
+            InkWell(
+                child: ListTile(
+                  leading: Icon(Icons.analytics_rounded),
+                  title: Text('Map View'),
+                ),
+                onTap: (){
+                  Navigator.pushReplacementNamed(context, "/mapview");
+                }
+            ),
+            InkWell(
+                child: ListTile(
+                  leading: Icon(Icons.analytics_rounded),
+                  title: Text('Upload Pic and get Recommendation'),
+                ),
+                onTap: (){
+                  Navigator.pushReplacementNamed(context, "/upload");
+                }
+            ),
+          ],
+        ),
+      ),
       body: Stack(
         children: <Widget>[
           Container(
@@ -66,8 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         )
                       ),
                     ),
-
-                    Filter(height: size.height*0.25,recordsData: recordsData,updateParentFilter: updateFilter,),
+                    Filter(height: size.height*0.18,recordsData: this.widget.recordsData,updateParentFilter: updateFilter,),
                     RaisedButton(
                       onPressed: null,
                       padding: const EdgeInsets.all(0.0),
@@ -93,10 +149,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     SizedBox(height: 20,),
                     Container(
-                      height: size.height * .52,
+                      height: size.height * .5,
                         child: SingleChildScrollView(
                           child:FutureBuilder<RecordsData>(
-                            future: recordsData,
+                            future: this.widget.recordsData,
                             builder: (context, snapshot) {
                               if (snapshot.hasData) {
                                 RecordsData records = snapshot.data;
