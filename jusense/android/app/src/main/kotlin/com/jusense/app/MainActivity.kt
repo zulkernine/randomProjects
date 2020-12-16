@@ -1,4 +1,4 @@
-package com.example.jusense
+package com.jusense.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -3,6 +3,7 @@ import './data_objects/records_object.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import './components/records.dart';
 
 
 Future<String> loadAsset() async {
@@ -22,7 +23,7 @@ class _MapViewState extends State<MapView> {
   GoogleMapController mapController;
   final stationPosition = {};
   final List<Marker> _markers = <Marker>[];
-  StationRecord currentStation;
+  StationRecord currentStation=null;
 
   @override
   void initState(){
@@ -31,6 +32,7 @@ class _MapViewState extends State<MapView> {
 
     loadAsset().then((value) => setState((){
       stationPosition.addAll(jsonDecode(value));
+      print(stationPosition);
       mapController?.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
@@ -48,7 +50,7 @@ class _MapViewState extends State<MapView> {
               for(var strec in value.stateRecords)
                 for(var cityRec in strec.cityRecords )
                   for(StationRecord stat in cityRec.stationRecords)
-                    Marker(
+                    if(stationPosition[stat.stationName] != null) Marker(
                       markerId: MarkerId(stat.stationName),
                       position: LatLng(
                           double.parse(stationPosition[stat.stationName]["latitude"]),
@@ -60,13 +62,22 @@ class _MapViewState extends State<MapView> {
                       onTap: ()=>{
                         setState(() {
                           currentStation = stat;
+                          showModalBottomSheet(context: context, builder: (BuildContext context){
+                            return Record(stationRecord: currentStation,width: MediaQuery.of(context).size.width * 0.90,enableBorder: false,);
+
+                          },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
+                            ),
+                            backgroundColor: Colors.white,
+                          );
                         })
                       },
-
                     )
             ]
         );
       }) );
+      print(_markers.length);
       })
     );
 
@@ -78,7 +89,7 @@ class _MapViewState extends State<MapView> {
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
-    if(stationPosition != {})
+    if( stationPosition.isNotEmpty)
       mapController.animateCamera(
           CameraUpdate.newCameraPosition(
             CameraPosition(
@@ -93,6 +104,8 @@ class _MapViewState extends State<MapView> {
 
   @override
   Widget build(BuildContext context) {
+    print("build:");
+    print(_markers.length);
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,

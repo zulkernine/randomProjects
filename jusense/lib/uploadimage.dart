@@ -1,6 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+
+import './components/image_upload_component.dart';
 
 class UploadImage extends StatefulWidget {
   @override
@@ -36,10 +39,16 @@ class _UploadImageState extends State<UploadImage> {
     });
   }
 
+  deleteImage(File img){
+    setState(() {
+      _images.remove(img);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.tealAccent,
+      backgroundColor: Colors.white70,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         // leading: IconButton(
@@ -101,27 +110,48 @@ class _UploadImageState extends State<UploadImage> {
       body: SafeArea(
         child: Column(
           children: [
-            Row(
+            ButtonBar(
+              alignment: MainAxisAlignment.center,
               children: [
-                IconButton(icon: Icon(Icons.image), onPressed: (){
-                  getImage(true);
-                }),
-                IconButton(icon: Icon(Icons.camera), onPressed: (){
-                  getImage(false);
-                })
+                RaisedButton(
+                  color: Colors.blue,
+                  onPressed: () {getImage(true);},
+                  child: Row(
+                    children: [
+                      Icon(Icons.image),
+                      Padding(
+                        padding: const EdgeInsets.only(left:5.0),
+                        child: Text("Gallery"),
+                      )
+                    ],
+                  ),
+                ),
+                RaisedButton(
+                  color: Colors.blue,
+                  onPressed: () {getImage(false);},
+                  child: Row(
+                    children: [
+                      Icon(Icons.image),
+                      Padding(
+                        padding: const EdgeInsets.only(left:5.0),
+                        child: Text("Camera"),
+                      )
+                    ],
+                  ),
+                ),
               ],
             ),
             SizedBox(
               height: MediaQuery.of(context).size.height*0.8,
-              child: SingleChildScrollView(
+              child: (_images.length==0)? Center(
+                child: Text(
+                  "Select Image to upload"
+                ),
+              ) :SingleChildScrollView(
                 child: Column(
-
                   children: [
                     for(var img in _images)
-                      Container(
-                        child: Image.file(img),
-                        padding: EdgeInsets.all(10),
-                      )
+                      UploadIndividualImage(imageFile: img,delete: deleteImage,)
                   ],
                 ),
               ),

@@ -44,8 +44,9 @@ class _RecordsState extends State<Records> {
 class Record extends StatefulWidget {
   final double width;
   final StationRecord stationRecord;
+  final bool enableBorder;
 
-  Record({this.width , this.stationRecord});
+  Record({this.width = double.infinity , this.stationRecord,this.enableBorder=true});
 
   @override
   _RecordState createState() => _RecordState();
@@ -62,7 +63,7 @@ class _RecordState extends State<Record> {
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           // color: Colors.blue,
-          border: Border.all(color: Color.fromRGBO(223, 225, 229, 1.0),width: 2)
+          border: this.widget.enableBorder ? Border.all(color: Color.fromRGBO(223, 225, 229, 1.0),width: 2): Border.all(color: Colors.transparent,width: 0)
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
