@@ -125,7 +125,7 @@ class _RecordState extends State<Record> {
 
           SizedBox(height: 20,),
           Text(
-            "last updated: 20:00 25th Nov,2020",
+            "last updated: ${this.widget.stationRecord.updateTime}",
           ),
         ],
       ),

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "956632985676",
+    "project_id": "myipl-71c8b",
+    "storage_bucket": "myipl-71c8b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:956632985676:android:c3c45adf62437e38fa44e9",
+        "android_client_info": {
+          "package_name": "com.myipl.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "956632985676-r4uu9hea2212l5cgkdpjrk644rlntuds.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFUT4Og9mWv5I6v0SDdKV-36WrR-5qSgo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "956632985676-r4uu9hea2212l5cgkdpjrk644rlntuds.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
