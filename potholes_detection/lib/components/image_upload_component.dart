@@ -1,5 +1,6 @@
 import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -11,7 +12,10 @@ class UploadIndividualImage extends StatefulWidget {
   final File imageFile;
   final Function delete;
   final String url;
-  UploadIndividualImage({required this.imageFile, required this.delete,this.url = "https://google.com"});
+  UploadIndividualImage(
+      {required this.imageFile,
+      required this.delete,
+      this.url = "https://google.com"});
 
   @override
   _UploadIndividualImageState createState() => _UploadIndividualImageState();
@@ -23,18 +27,40 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
   bool _uploadingNow = false;
   double _uploadSize = 0;
   String downloadUrl = "";
+  bool processedInBackEnd = false;
+  File? processedImage;
+  List<String> labels = [];
+  int contentLength = 0;
+  double _progress = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    processedImage = null;
+  }
 
   Future<void> handleUploadTask(File largeFile) async {
     await _uploadToFirebase(largeFile);
-    var response = await http.post(Uri.parse(this.widget.url),headers: {"file":downloadUrl,"type":"image"});
-    if(response.statusCode == 200){
+    var response = await http.post(Uri.parse(this.widget.url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"file": downloadUrl, "type": "image"}));
+    print(response);
+    if (response.statusCode == 200) {
       var body = jsonDecode(response.body);
-      print(body);
+      await firebase_storage.FirebaseStorage.instance
+          .refFromURL(downloadUrl)
+          .delete();
+      this.setState(() {
+        processedInBackEnd = true;
+        downloadUrl = body["url"] as String;
+        labels = body["labels"] as List<String>;
+      });
+    } else {
+      print("Backend processing error occured");
     }
   }
 
-  Future<void> _uploadToFirebase(File largeFile)async{
+  Future<void> _uploadToFirebase(File largeFile) async {
     String filename = 'uploads/${largeFile.path.split('/').last}';
 
     firebase_storage.UploadTask task = firebase_storage.FirebaseStorage.instance
@@ -84,16 +110,33 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
       } else {
         print(e);
       }
-    }finally{
+    } finally {
       setState(() {
         _uploadingNow = false;
       });
     }
   }
 
-  Future<ui.Image> _loadImage() async {
-    final data = await widget.imageFile.readAsBytes();
-    return decodeImageFromList(data);
+  Future<File> _loadImage() async {
+    var filename = DateTime.now().microsecondsSinceEpoch.toString() + ".png";
+    var httpClient = new HttpClient();
+
+    String dir = (await getTemporaryDirectory()).path;
+    File file = new File('$dir/$filename');
+
+    var request = await httpClient.getUrl(Uri.parse(downloadUrl));
+    var response = await request.close();
+    setState(() {
+      contentLength = response.contentLength;
+      _progress = 1;
+    });
+    var bytes = await consolidateHttpClientResponseBytes(response);
+    await file.writeAsBytes(bytes);
+    setState(() {
+      processedImage = file;
+      _progress = 0;
+    });
+    return file;
   }
 
   @override
@@ -107,45 +150,44 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
               Border.all(color: Color.fromRGBO(223, 225, 229, 1.0), width: 1)),
       child: Column(
         children: [
-          FittedBox(
-            child: FutureBuilder(
-              future: _loadImage(),
-              builder: (ctx,snapshot){
-                if (snapshot.connectionState == ConnectionState.done) {
-                  // If we got an error
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        '${snapshot.error} occured',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                    );
+          processedInBackEnd
+              ? (processedImage == null
+                  ? FutureBuilder(
+                      future: _loadImage(),
+                      builder: (ctx, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          // If we got an error
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Text(
+                                '${snapshot.error} occured',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            );
 
-                    // if we got our data
-                  } else if (snapshot.hasData) {
-                    // Extracting data from snapshot object
-                    final data = snapshot.data as ui.Image;
-                    return SizedBox(
-                      width: data.width.toDouble(),
-                      height: data.height.toDouble(),
-                      child: CustomPaint(
-                        painter: PotholesDetector(data, [
-                          Rect.fromPoints(Offset(122, 103), Offset(483, 306)),
-                          Rect.fromPoints(Offset(292, 92), Offset(595, 329))
-                        ]),
-                      ),
-                    );
-                  }
-                }
+                            // if we got our data
+                          } else if (snapshot.hasData) {
+                            // Extracting data from snapshot object
+                            final data = snapshot.data as File;
+                            return Image.file(data);
+                          }
+                        }
 
-                // Displaying LoadingSpinner to indicate waiting state
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-
-              },
-            ),
-          ),
+                        // Displaying LoadingSpinner to indicate waiting state
+                        return Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      },
+                    )
+                  : Image.file(processedImage!))
+              : Image.file(widget.imageFile),
+          (labels.length != 0)
+              ? Text("Found: " +
+                  labels.join(", ") +
+                  "\nSize: " +
+                  (contentLength / 1048576).toStringAsPrecision(6) +
+                  " MB")
+              : Container(),
           Row(
             children: [
               if (_uploadComplete)
@@ -175,10 +217,11 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
                       style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(Colors.green),
+                        backgroundColor:
+                            MaterialStateProperty.all<Color>(Colors.green),
                       ),
                       onPressed: () async {
-                        if(this.widget.url.length < 26){
+                        if (this.widget.url.length < 26) {
                           showDialog<String>(
                             context: context,
                             builder: (BuildContext context) => AlertDialog(
@@ -192,7 +235,7 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
                               ],
                             ),
                           );
-                        }else{
+                        } else {
                           await handleUploadTask(this.widget.imageFile);
                         }
                       },
@@ -217,7 +260,8 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
                 padding: const EdgeInsets.all(8.0),
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.red),
                   ),
                   onPressed: () {
                     this.widget.delete(this.widget.imageFile);
