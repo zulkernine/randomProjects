@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:firebase_core/firebase_core.dart' as firebase_core;
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:math';
 import 'package:chewie/chewie.dart';
@@ -12,7 +13,8 @@ class UploadIndividualVideo extends StatefulWidget {
   final File imageFile;
   final Function delete;
   final String url;
-  UploadIndividualVideo({required this.imageFile, required this.delete,this.url = "https://19495e184dba.ngrok.io/predict"});
+  final Map<int, LatLng> path;
+  UploadIndividualVideo({required this.imageFile, required this.delete,this.url = "https://19495e184dba.ngrok.io/predict",required this.path});
 
   @override
   _UploadIndividualVideoState createState() => _UploadIndividualVideoState();

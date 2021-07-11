@@ -2,7 +2,9 @@ import 'dart:ffi';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:location/location.dart';
 import 'package:potholes_detection/components/video_upload_and_play.dart';
 import 'dart:io';
 
@@ -10,15 +12,39 @@ import './components/image_upload_component.dart';
 import './components/CustomDrawer.dart';
 
 class UploadImage extends StatefulWidget {
+  final List<File> images ;
+  final File? videoes ;
+  final String url;
+  final Map<int, LatLng> path;
+
+  UploadImage({required this.images, required this.url, required this.videoes,required this.path});
+
   @override
   _UploadImageState createState() => _UploadImageState();
 }
 
-class _UploadImageState extends State<UploadImage> {
+class _UploadImageState extends State<UploadImage>{
 
   List<File> _images = [];
   File? _videoes =null;
   String url = "";
+  bool recordingNow=false;
+  Map<int, LatLng> path={};
+
+
+  @override
+  void initState(){
+    super.initState();
+    _images = this.widget.images;
+    _videoes = widget.videoes;
+    url = widget.url;
+    path = widget.path;
+    Location().onLocationChanged.listen((LocationData currentLocation) {
+      if(recordingNow){
+        path[DateTime.now().millisecondsSinceEpoch] = LatLng(currentLocation.latitude!, currentLocation.longitude!);
+      }
+    });
+  }
 
 
   Future getImage(bool gallery) async {
@@ -29,12 +55,12 @@ class _UploadImageState extends State<UploadImage> {
       pickedFile = await picker.getImage(
         source: ImageSource.gallery,maxHeight: 512,
           maxWidth: 512,
-          imageQuality: 50);
+          imageQuality: 60);
     }
     // Otherwise open camera to get new photo
     else{
       pickedFile = await picker.getImage(
-        source: ImageSource.camera,);
+        source: ImageSource.camera, imageQuality: 50);
     }
 
     setState(() {
@@ -56,9 +82,15 @@ class _UploadImageState extends State<UploadImage> {
     }
     // Otherwise open camera to get new photo
     else{
-      print(DateTime.now());
+      setState(() {
+        recordingNow = true;
+      });
       pickedFile = await picker.getVideo(
         source: ImageSource.camera,);
+        setState(() {
+          recordingNow = false;
+        });
+      // print(File(pickedFile!.path).lastModifiedSync());
     }
 
     setState(() {
@@ -148,7 +180,7 @@ class _UploadImageState extends State<UploadImage> {
                   ],
                 ),
 
-                _videoes == null ? Container() :  UploadIndividualVideo(imageFile: _videoes!, delete: deleteImage,url: url,)
+                _videoes == null ? Container() :  UploadIndividualVideo(imageFile: _videoes!, delete: deleteImage,url: url,path: path,)
 
               ],
             ),

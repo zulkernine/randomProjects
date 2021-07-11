@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:potholes_detection/components/CustomDrawer.dart';
 import 'package:location/location.dart';
+import 'dart:io';
 
 import 'UploadImage.dart';
 import 'LiveMap.dart';
@@ -22,6 +24,12 @@ class _MyAppState extends State<MyApp> {
   UserCredential? userCredential;
   bool _error = false;
   String _error_message = "Something went wrong!\nPlease restart the app";
+
+  //States value for UploadImage()
+  List<File> _images = [];
+  File? _videoes =null;
+  String server_url = "";
+  Map<int, LatLng> path_coordinate = {};
 
   void initializeFlutterFire() async {
     try {
@@ -50,8 +58,6 @@ class _MyAppState extends State<MyApp> {
     if (!_serviceEnabled) {
       _serviceEnabled = await location.requestService();
       if (!_serviceEnabled) {
-        return;
-      }else{
         setState(() {
           _error = true;
           _error_message = "We can't Work without location service :(, Enable it, give permission and reopen the app.";
@@ -63,8 +69,6 @@ class _MyAppState extends State<MyApp> {
     if (_permissionGranted == PermissionStatus.denied) {
       _permissionGranted = await location.requestPermission();
       if (_permissionGranted != PermissionStatus.granted) {
-        return;
-      }else{
         setState(() {
           _error = true;
           _error_message = "We can't Work without location service :(, Enable it, give permission and reopen the app.";
@@ -121,7 +125,7 @@ class _MyAppState extends State<MyApp> {
       home: MyHomePage(title: "Home Page",),
       routes: {
         // '/': (context) => MyHomePage(title: 'Home Page'),
-        '/upload':(context) => UploadImage(),
+        '/upload':(context) => UploadImage(images: _images, url: server_url, videoes: _videoes,path: path_coordinate,),
         '/map':(context) => LiveMap(),
       },
     );

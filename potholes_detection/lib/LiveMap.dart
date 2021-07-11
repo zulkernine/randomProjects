@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import './components/CustomDrawer.dart';
+import './components/AnnomalyLocationsServices.dart';
 
 class LiveMap extends StatefulWidget {
   @override
@@ -19,7 +20,8 @@ class _LiveMapState extends State<LiveMap> {
 
   Anomalies anomalies = Anomalies();
 
-  static const LatLng _center = const LatLng(22.496695803485945, 88.37183921981813);
+  static const LatLng _center =
+      const LatLng(22.496695803485945, 88.37183921981813);
 
   @override
   void initState() {
@@ -39,6 +41,7 @@ class _LiveMapState extends State<LiveMap> {
   @override
   void dispose() {
     super.dispose();
+    // stream
   }
 
   //filler function for test
@@ -79,67 +82,89 @@ class _LiveMapState extends State<LiveMap> {
   }
 
   void _onMapCreated(GoogleMapController controller) {
-
     setState(() {
       mapController.complete(controller);
     });
   }
 
   void setMarkers() {
+    Map<LatLng, String> marker_positions = Map();
+    for (LatLng l in anomalies.wet_potholes) {
+      if (marker_positions.containsKey(l)) {
+        marker_positions[l] = "${marker_positions[l]}, Wet pothole";
+      } else {
+        marker_positions[l] = "Wet pothole";
+      }
+    }
+
+    for (LatLng l in anomalies.uneven_surface) {
+      if (marker_positions.containsKey(l)) {
+        marker_positions[l] = "${marker_positions[l]}, Uneven surface";
+      } else {
+        marker_positions[l] = "Uneven surface";
+      }
+    }
+
+    for (LatLng l in anomalies.speed_breaker) {
+      if (marker_positions.containsKey(l)) {
+        marker_positions[l] = "${marker_positions[l]}, Speed breaker";
+      } else {
+        marker_positions[l] = "Speed breaker";
+      }
+    }
+
+    for (LatLng l in anomalies.manholes) {
+      if (marker_positions.containsKey(l)) {
+        marker_positions[l] = "${marker_positions[l]}, Manholes";
+      } else {
+        marker_positions[l] = "Manholes";
+      }
+    }
+
+    for (LatLng l in anomalies.dry_potholes) {
+      if (marker_positions.containsKey(l)) {
+        marker_positions[l] = "${marker_positions[l]}, Dry pothole";
+      } else {
+        marker_positions[l] = "Dry pothole";
+      }
+    }
     this.setState(() {
       _markers.addAll([
-        for (LatLng l in anomalies.wet_potholes)
+        for (LatLng l in marker_positions.keys)
           Marker(
             markerId: MarkerId(l.latitude.toString() + l.longitude.toString()),
             position: l,
             infoWindow: InfoWindow(
-              title: "Wet Pot holes",
+              title: "",
             ),
-            onTap: () => {},
-          ),
-
-        for (LatLng l in anomalies.uneven_surface)
-          Marker(
-            markerId: MarkerId(l.latitude.toString() + l.longitude.toString()),
-            position: l,
-            infoWindow: InfoWindow(
-              title: "Uneven Surface",
-            ),
-            onTap: () => {},
-          ),
-
-        for (LatLng l in anomalies.dry_potholes)
-          Marker(
-            markerId: MarkerId(l.latitude.toString() + l.longitude.toString()),
-            position: l,
-            infoWindow: InfoWindow(
-              title: "Dry Pot holes",
-            ),
-            onTap: () => {},
-          ),
-
-        for (LatLng l in anomalies.speed_breaker)
-          Marker(
-            markerId: MarkerId(l.latitude.toString() + l.longitude.toString()),
-            position: l,
-            infoWindow: InfoWindow(
-              title: "Speed breaker",
-            ),
-            onTap: () => {},
-          ),
-
-        for (LatLng l in anomalies.manholes)
-          Marker(
-            markerId: MarkerId(l.latitude.toString() + l.longitude.toString()),
-            position: l,
-            infoWindow: InfoWindow(
-              title: "Manholes",
-            ),
-            onTap: () => {},
+            onTap: () => {
+              setState(() {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Container(
+                      width: MediaQuery.of(context).size.width * 0.90,
+                      padding: EdgeInsets.all(20),
+                      margin: EdgeInsets.all(50),
+                      child: Column(
+                        children: [
+                          Text( "Lat:${l.latitude}  Lon:${l.longitude}", style: TextStyle(fontWeight: FontWeight.bold),),
+                          Text("Anomalies: " + marker_positions[l]!,style: TextStyle(fontSize: 20),)
+                        ],
+                      ),
+                    );
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(25.0)),
+                  ),
+                  backgroundColor: Colors.white,
+                );
+              })
+            },
           ),
       ]);
     });
-
   }
 
   @override
@@ -167,51 +192,5 @@ class _LiveMapState extends State<LiveMap> {
         child: Icon(Icons.update),
       ),
     );
-  }
-}
-
-class Anomalies {
-  Set<LatLng> wet_potholes = <LatLng>{};
-  Set<LatLng> dry_potholes = <LatLng>{};
-  Set<LatLng> manholes = <LatLng>{};
-  Set<LatLng> speed_breaker = <LatLng>{};
-  Set<LatLng> uneven_surface = <LatLng>{};
-
-  Anomalies();
-
-  Anomalies.fromJson(Map<String, dynamic> data) {
-
-    wet_potholes.addAll([
-      for (List l in jsonDecode(data["wet_potholes"])) LatLng(l.first, l.last)
-    ]);
-    dry_potholes.addAll([
-      for (List l in jsonDecode(data["dry_potholes"])) LatLng(l.first, l.last)
-    ]);
-    manholes.addAll(
-        [for (List l in jsonDecode(data["manholes"])) LatLng(l.first, l.last)]);
-    speed_breaker.addAll([
-      for (List l in jsonDecode(data["speed_breaker"])) LatLng(l.first, l.last)
-    ]);
-    uneven_surface.addAll([
-      for (List l in jsonDecode(data["uneven_surface"])) LatLng(l.first, l.last)
-    ]);
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      "wet_potholes": jsonEncode(wet_potholes.toList()),
-      "dry_potholes": jsonEncode(dry_potholes.toList()),
-      "manholes": jsonEncode(manholes.toList()),
-      "speed_breaker": jsonEncode(speed_breaker.toList()),
-      "uneven_surface": jsonEncode(uneven_surface.toList()),
-    };
-  }
-
-  void merge(Anomalies anm) {
-    this.wet_potholes = this.wet_potholes.union(anm.wet_potholes);
-    this.dry_potholes = this.dry_potholes.union(anm.dry_potholes);
-    this.manholes = this.manholes.union(anm.manholes);
-    this.speed_breaker = this.speed_breaker.union(anm.speed_breaker);
-    this.uneven_surface = this.uneven_surface.union(anm.uneven_surface);
   }
 }

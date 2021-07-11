@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -7,6 +8,8 @@ import 'dart:ui' as ui;
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:firebase_core/firebase_core.dart' as firebase_core;
 import 'package:http/http.dart' as http;
+import 'package:location/location.dart';
+import 'package:potholes_detection/components/AnnomalyLocationsServices.dart';
 
 class UploadIndividualImage extends StatefulWidget {
   final File imageFile;
@@ -32,11 +35,13 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
   List<String> labels = [];
   int contentLength = 0;
   double _progress = 0;
+  LocationData? locationData;
 
   @override
   void initState() {
     super.initState();
     processedImage = null;
+    locationData = null;
   }
 
   Future<void> handleUploadTask(File largeFile) async {
@@ -53,8 +58,12 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
       this.setState(() {
         processedInBackEnd = true;
         downloadUrl = body["url"] as String;
-        labels = body["labels"] as List<String>;
+        print(body["labels"].runtimeType);
+        print(body["labels"]);
+        for(var s in body["labels"]) labels.add(s.toString());
+        // labels = body["labels"] as List<String>;
       });
+      updateAnomaly(location: LatLng(locationData!.latitude!, locationData!.longitude!), anomaliesName: labels.toSet());
     } else {
       print("Backend processing error occured");
     }
@@ -236,7 +245,15 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
                             ),
                           );
                         } else {
-                          await handleUploadTask(this.widget.imageFile);
+                          try{
+                            var loc = await Location().getLocation();
+                            setState(() {
+                              locationData = loc;
+                            });
+                            await handleUploadTask(this.widget.imageFile);
+                          }catch(error){
+                            print(error);
+                          }
                         }
                       },
                       child: Row(
