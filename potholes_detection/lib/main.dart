@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:potholes_detection/components/CustomDrawer.dart';
 import 'package:location/location.dart';
 import 'dart:io';
 
 import 'UploadImage.dart';
 import 'LiveMap.dart';
+import 'HomePage.dart';
 
 void main() {
   runApp(MyApp());
@@ -31,6 +31,21 @@ class _MyAppState extends State<MyApp> {
   String processedVideoUrl = "";
   String server_url = "";
   Map<int, LatLng> path_coordinate = {};
+
+  var pageList = <Widget>[];
+  int currentPaeIndex = 0;
+
+  final bottomNavigationItems = [
+    BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+    BottomNavigationBarItem(icon: Icon(Icons.cloud_upload), label: 'Upload'),
+    BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map')
+  ];
+
+  void onTapBottomNavigation(int index) {
+    setState(() {
+      currentPaeIndex = index;
+    });
+  }
 
   void initializeFlutterFire() async {
     try {
@@ -85,6 +100,15 @@ class _MyAppState extends State<MyApp> {
     // TODO: implement initState
     initializeFlutterFire();
     checkLocationPermission();
+    pageList.add(MyHomePage(title: "Road Anomalies"));
+    pageList.add(UploadImage(
+      images: _images,
+      url: server_url,
+      videoes: _videoes,
+      path: path_coordinate,
+      processedVideoUrl: processedVideoUrl,
+    ));
+    pageList.add(LiveMap());
     super.initState();
   }
 
@@ -123,71 +147,21 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        backgroundColor: Colors.lightBlueAccent,
       ),
-      initialRoute: '/',
-      home: MyHomePage(
-        title: "Home Page",
-      ),
-      routes: {
-        '/upload': (context) => UploadImage(
-              images: _images,
-              url: server_url,
-              videoes: _videoes,
-              path: path_coordinate,
-              processedVideoUrl: processedVideoUrl,
-            ),
-        '/map': (context) => LiveMap(),
-      },
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  final String title;
-
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      drawer: CustomDrawer(),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SelectableText(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
+      home: SafeArea(
+        child: Scaffold(
+          body: IndexedStack(
+            children: pageList,
+            index: currentPaeIndex,
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            items: bottomNavigationItems,
+            currentIndex: currentPaeIndex,
+            onTap: onTapBottomNavigation,
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

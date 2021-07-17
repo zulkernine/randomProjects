@@ -9,7 +9,6 @@ import 'package:potholes_detection/components/video_upload_and_play.dart';
 import 'dart:io';
 
 import './components/image_upload_component.dart';
-import './components/CustomDrawer.dart';
 
 class UploadImage extends StatefulWidget {
   final List<File> images ;
@@ -125,7 +124,6 @@ class _UploadImageState extends State<UploadImage>{
         appBar: AppBar(
           title: Text("Upload Image"),
         ),
-        drawer: CustomDrawer(),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Column(

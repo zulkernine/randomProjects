@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import './components/CustomDrawer.dart';
 import './components/AnnomalyLocationsServices.dart';
 
 class LiveMap extends StatefulWidget {
@@ -176,7 +175,6 @@ class _LiveMapState extends State<LiveMap> {
       appBar: AppBar(
         title: Text("Google map"),
       ),
-      drawer: CustomDrawer(),
       body: SafeArea(
         child: GoogleMap(
           onMapCreated: _onMapCreated,
