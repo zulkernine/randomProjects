@@ -25,7 +25,7 @@ class CustomDrawer extends StatelessWidget {
               title: Text('Home'),
             ),
             onTap: (){
-              Navigator.pushReplacementNamed(context, "/");
+              Navigator.pushNamed(context, "/");
             },
             splashColor: Colors.blue,
 
@@ -36,7 +36,7 @@ class CustomDrawer extends StatelessWidget {
                 title: Text('Upload Pic and get Recommendation'),
               ),
               onTap: (){
-                Navigator.pushReplacementNamed(context, "/upload");
+                Navigator.pushNamed(context, "/upload");
               }
           ),
           InkWell(
@@ -45,7 +45,7 @@ class CustomDrawer extends StatelessWidget {
                 title: Text('See anomalies live'),
               ),
               onTap: (){
-                Navigator.pushReplacementNamed(context, "/map");
+                Navigator.pushNamed(context, "/map");
               }
           ),
         ],

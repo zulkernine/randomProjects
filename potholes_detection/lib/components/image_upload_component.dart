@@ -34,7 +34,7 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
   File? processedImage;
   List<String> labels = [];
   int contentLength = 0;
-  double _progress = 0;
+  bool isProcessing = false;
   LocationData? locationData;
 
   @override
@@ -46,12 +46,19 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
 
   Future<void> handleUploadTask(File largeFile) async {
     await _uploadToFirebase(largeFile);
+    setState(() {
+      isProcessing = true;
+    });
     var response = await http.post(Uri.parse(this.widget.url),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"file": downloadUrl, "type": "image"}));
-    print(response);
+    setState(() {
+      isProcessing = false;
+    });
     if (response.statusCode == 200) {
       var body = jsonDecode(response.body);
+      print("Processed response:");
+      print(body);
       await firebase_storage.FirebaseStorage.instance
           .refFromURL(downloadUrl)
           .delete();
@@ -60,12 +67,28 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
         downloadUrl = body["url"] as String;
         print(body["labels"].runtimeType);
         print(body["labels"]);
-        for(var s in body["labels"]) labels.add(s.toString());
+        for (var s in body["labels"]) labels.add(s.toString());
         // labels = body["labels"] as List<String>;
       });
-      updateAnomaly(location: LatLng(locationData!.latitude!, locationData!.longitude!), anomaliesName: labels.toSet());
+      updateAnomaly(
+          location: LatLng(locationData!.latitude!, locationData!.longitude!),
+          anomaliesName: labels.toSet());
     } else {
       print("Backend processing error occured");
+      showDialog<String>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: const Text('Error'),
+          content:
+              const Text("Backend processing error occurred, please retry."),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'OK'),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -137,13 +160,11 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
     var response = await request.close();
     setState(() {
       contentLength = response.contentLength;
-      _progress = 1;
     });
     var bytes = await consolidateHttpClientResponseBytes(response);
     await file.writeAsBytes(bytes);
     setState(() {
       processedImage = file;
-      _progress = 0;
     });
     return file;
   }
@@ -245,13 +266,13 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
                             ),
                           );
                         } else {
-                          try{
+                          try {
                             var loc = await Location().getLocation();
                             setState(() {
                               locationData = loc;
                             });
                             await handleUploadTask(this.widget.imageFile);
-                          }catch(error){
+                          } catch (error) {
                             print(error);
                           }
                         }
@@ -296,19 +317,10 @@ class _UploadIndividualImageState extends State<UploadIndividualImage> {
               )
             ],
           ),
-          if (_uploadComplete)
+          if (isProcessing)
             Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Text(
-                    "Download Url:",
-                  ),
-                  SelectableText(
-                    downloadUrl,
-                  )
-                ],
-              ),
+              padding: EdgeInsets.all(15),
+              child: Text("Please wait while processing the image ....."),
             )
         ],
       ),

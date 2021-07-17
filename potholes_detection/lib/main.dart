@@ -27,7 +27,8 @@ class _MyAppState extends State<MyApp> {
 
   //States value for UploadImage()
   List<File> _images = [];
-  File? _videoes =null;
+  File? _videoes = null;
+  String processedVideoUrl = "";
   String server_url = "";
   Map<int, LatLng> path_coordinate = {};
 
@@ -39,7 +40,7 @@ class _MyAppState extends State<MyApp> {
       setState(() {
         _initialized = true;
       });
-    } catch(e) {
+    } catch (e) {
       // Set `_error` state to true if Firebase initialization fails
       setState(() {
         _error = true;
@@ -48,7 +49,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void checkLocationPermission()async{
+  void checkLocationPermission() async {
     Location location = new Location();
     bool _serviceEnabled;
     PermissionStatus _permissionGranted;
@@ -60,7 +61,8 @@ class _MyAppState extends State<MyApp> {
       if (!_serviceEnabled) {
         setState(() {
           _error = true;
-          _error_message = "We can't Work without location service :(, Enable it, give permission and reopen the app.";
+          _error_message =
+              "We can't Work without location service :(, Enable it, give permission and reopen the app.";
         });
       }
     }
@@ -71,7 +73,8 @@ class _MyAppState extends State<MyApp> {
       if (_permissionGranted != PermissionStatus.granted) {
         setState(() {
           _error = true;
-          _error_message = "We can't Work without location service :(, Enable it, give permission and reopen the app.";
+          _error_message =
+              "We can't Work without location service :(, Enable it, give permission and reopen the app.";
         });
       }
     }
@@ -87,13 +90,13 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    if(_error) {
+    if (_error) {
       return MaterialApp(
         home: SafeArea(
           child: Scaffold(
             body: Center(
               child: Container(
-                child:Text(_error_message),
+                child: Text(_error_message),
               ),
             ),
           ),
@@ -107,7 +110,7 @@ class _MyAppState extends State<MyApp> {
         home: SafeArea(
           child: Center(
             child: Container(
-              child:CircularProgressIndicator(),
+              child: CircularProgressIndicator(),
             ),
           ),
         ),
@@ -122,11 +125,18 @@ class _MyAppState extends State<MyApp> {
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       initialRoute: '/',
-      home: MyHomePage(title: "Home Page",),
+      home: MyHomePage(
+        title: "Home Page",
+      ),
       routes: {
-        // '/': (context) => MyHomePage(title: 'Home Page'),
-        '/upload':(context) => UploadImage(images: _images, url: server_url, videoes: _videoes,path: path_coordinate,),
-        '/map':(context) => LiveMap(),
+        '/upload': (context) => UploadImage(
+              images: _images,
+              url: server_url,
+              videoes: _videoes,
+              path: path_coordinate,
+              processedVideoUrl: processedVideoUrl,
+            ),
+        '/map': (context) => LiveMap(),
       },
     );
   }

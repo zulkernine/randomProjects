@@ -14,10 +14,11 @@ import './components/CustomDrawer.dart';
 class UploadImage extends StatefulWidget {
   final List<File> images ;
   final File? videoes ;
+  final String processedVideoUrl;
   final String url;
   final Map<int, LatLng> path;
 
-  UploadImage({required this.images, required this.url, required this.videoes,required this.path});
+  UploadImage({required this.images, required this.url, required this.videoes,required this.path,required this.processedVideoUrl});
 
   @override
   _UploadImageState createState() => _UploadImageState();
@@ -82,13 +83,17 @@ class _UploadImageState extends State<UploadImage>{
     }
     // Otherwise open camera to get new photo
     else{
+      var loc = await Location().getLocation();
       setState(() {
+        path[DateTime.now().millisecondsSinceEpoch] = LatLng(loc.latitude!, loc.longitude!);
         recordingNow = true;
       });
       pickedFile = await picker.getVideo(
         source: ImageSource.camera,);
+      loc = await Location().getLocation();
         setState(() {
           recordingNow = false;
+          path[DateTime.now().millisecondsSinceEpoch] = LatLng(loc.latitude!, loc.longitude!);
         });
       // print(File(pickedFile!.path).lastModifiedSync());
     }
@@ -180,7 +185,7 @@ class _UploadImageState extends State<UploadImage>{
                   ],
                 ),
 
-                _videoes == null ? Container() :  UploadIndividualVideo(imageFile: _videoes!, delete: deleteImage,url: url,path: path,)
+                _videoes == null ? Container() :  UploadIndividualVideo(imageFile: _videoes!, delete: deleteImage,url: url,path: path,processedVideoUrl: widget.processedVideoUrl,)
 
               ],
             ),

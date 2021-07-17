@@ -62,6 +62,52 @@ Future<void> updateAnomaly({required LatLng location,required Set<String> anomal
     }
   }
 
+  await updateFirestoreLocations(anomalies);
+}
+
+Future<void> updateAnnomalyLocations(Map<int, LatLng> path,var result,int startingTime)async{
+  var lb = result['labels'] as Map;
+  Anomalies anomalies = Anomalies();
+  for(var e in lb.entries){
+    if((e.value as List).isNotEmpty){
+      for(var s in e.value ){
+        //TODO compute location using key
+        LatLng location = path[closestKey(path.keys.toList(), startingTime + int.parse(e.key as String))]!;
+
+        switch(s as String){
+          case "wet pothole" : anomalies.wet_potholes.add(location);break;
+          case "dry pothole" : anomalies.dry_potholes.add(location); break;
+          case "manhole" : anomalies.manholes.add(location); break;
+          case "speed breaker" : anomalies.speed_breaker.add(location); break;
+          case "uneven surface": anomalies.uneven_surface.add(location); break;
+        }
+      }
+    }
+  }
+
+  await updateFirestoreLocations(anomalies);
+}
+
+//For internal use only
+int closestKey(List<int> timestamps, int t){
+  int start = 0; int end  = timestamps.length -1; int mid = 0;
+  while(start < end){
+    mid = (start + end) ~/ 2 ;
+
+    if(timestamps[mid] > t){
+      end = mid -1;
+    }else{
+      start = mid + 1;
+    }
+  }
+
+  int d1 = t - timestamps[mid],d2 = timestamps[mid+1] - t;
+  if(d1 > d2) return timestamps[mid+1];
+
+  return timestamps[mid];
+}
+
+Future<void> updateFirestoreLocations(Anomalies anomalies)async{
   print("Updating firestore");
   print(anomalies.toJson());
   FirebaseFirestore.instance.runTransaction((transaction) async {
